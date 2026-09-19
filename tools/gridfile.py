@@ -18,6 +18,16 @@ Header lines start with ``#`` and may be interleaved with blank lines, but must
 all appear before the first grid row. ``map`` may be repeated. Every non-``.``
 character in the grid must be bound by ``map`` to a key of
 ``palette/master.json``. ``.`` is background and is painted per ``bg``.
+
+A ``#`` line with no colon in it is a comment. One *with* a colon has to be a
+well formed header, so a typo in a key is an error rather than a silent no-op.
+
+A file may instead derive itself from another::
+
+    # from: river_ne.txt
+    # transform: mirror_x
+
+It then carries no rows of its own and inherits every header it does not state.
 """
 from __future__ import annotations
 
@@ -37,10 +47,48 @@ HEADER_RE = re.compile(r"^#\s*([a-z_]+)\s*:\s*(.*)$")
 MAP_ENTRY_RE = re.compile(r"^(.)=([A-Za-z0-9_]+)$")
 
 REQUIRED_HEADERS = ("type", "size", "map")
+MAX_DERIVATION_DEPTH = 8
 
 
 class GridError(Exception):
     """Raised when a file cannot be parsed far enough to be checked."""
+
+
+def _mirror_x(rows: list[str]) -> list[str]:
+    return [row[::-1] for row in rows]
+
+
+def _mirror_y(rows: list[str]) -> list[str]:
+    return rows[::-1]
+
+
+def _rotate_180(rows: list[str]) -> list[str]:
+    return [row[::-1] for row in rows[::-1]]
+
+
+def _rotate_cw(rows: list[str]) -> list[str]:
+    height, width = len(rows), len(rows[0])
+    return ["".join(rows[height - 1 - j][i] for j in range(height)) for i in range(width)]
+
+
+def _rotate_ccw(rows: list[str]) -> list[str]:
+    height, width = len(rows), len(rows[0])
+    return ["".join(rows[j][width - 1 - i] for j in range(height)) for i in range(width)]
+
+
+# Deterministic transforms, per HANDOFF 2.4: a mirrored asset is derived by code
+# rather than kept as a second copy that has to be edited in step.
+#
+# All of these move the light with the image. They only suit assets whose
+# shading is symmetric about the axis in question - a river channel, not a face.
+TRANSFORMS = {
+    "mirror_x": _mirror_x,
+    "mirror_y": _mirror_y,
+    "rotate_180": _rotate_180,
+    "rotate_cw": _rotate_cw,
+    "rotate_ccw": _rotate_ccw,
+}
+SWAPS_AXES = {"rotate_cw", "rotate_ccw"}
 
 
 def hex_to_rgb(value: str) -> tuple[int, int, int]:
@@ -131,47 +179,21 @@ class Grid:
         }
 
 
-def parse(path: Path) -> Grid:
-    """Parse a grid file. Raises :class:`GridError` if the header is unusable."""
+def parse(path: Path, stack: tuple[Path, ...] = ()) -> Grid:
+    """Parse a grid file. Raises :class:`GridError` if the header is unusable.
+
+    ``stack`` carries the chain of files already being resolved through ``from``,
+    so a cycle is reported instead of recursing forever.
+    """
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
         raise GridError(f"{path}: cannot read: {exc}") from None
 
-    headers: dict[str, str] = {}
-    charmap: dict[str, str] = {}
-    rows: list[str] = []
+    headers, charmap, rows = _read(path, text)
 
-    for lineno, line in enumerate(text.splitlines(), start=1):
-        line = line.rstrip()
-        if line.startswith("#"):
-            if rows:
-                raise GridError(f"{path}:{lineno}: header line after grid rows started")
-            header = HEADER_RE.match(line)
-            if not header:
-                raise GridError(f"{path}:{lineno}: malformed header line {line!r}")
-            key, value = header.group(1), header.group(2).strip()
-            if key == "map":
-                headers.setdefault("map", "")
-                for entry in value.split():
-                    pair = MAP_ENTRY_RE.match(entry)
-                    if not pair:
-                        raise GridError(f"{path}:{lineno}: malformed map entry {entry!r}")
-                    ch, color = pair.group(1), pair.group(2)
-                    if ch == BACKGROUND:
-                        raise GridError(f"{path}:{lineno}: '.' is background and cannot be mapped")
-                    if ch in charmap and charmap[ch] != color:
-                        raise GridError(
-                            f"{path}:{lineno}: {ch!r} mapped twice "
-                            f"({charmap[ch]!r} then {color!r})"
-                        )
-                    charmap[ch] = color
-            else:
-                headers[key] = value
-            continue
-        if not line:
-            continue
-        rows.append(line)
+    if "from" in headers:
+        headers, charmap, rows = _derive(path, headers, charmap, rows, stack)
 
     missing = [key for key in REQUIRED_HEADERS if key not in headers]
     if missing:
@@ -204,6 +226,89 @@ def parse(path: Path) -> Grid:
         max_colors=max_colors,
         headers=headers,
     )
+
+
+def _read(path: Path, text: str) -> tuple[dict[str, str], dict[str, str], list[str]]:
+    """Split a file into headers, char map and grid rows. No semantics yet."""
+    headers: dict[str, str] = {}
+    charmap: dict[str, str] = {}
+    rows: list[str] = []
+
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        line = line.rstrip()
+        if line.startswith("#"):
+            if rows:
+                raise GridError(f"{path}:{lineno}: header line after grid rows started")
+            header = HEADER_RE.match(line)
+            if not header:
+                if ":" in line:
+                    raise GridError(f"{path}:{lineno}: malformed header line {line!r}")
+                continue  # a plain '#' line is a comment
+
+            key, value = header.group(1), header.group(2).strip()
+            if key == "map":
+                headers.setdefault("map", "")
+                for entry in value.split():
+                    pair = MAP_ENTRY_RE.match(entry)
+                    if not pair:
+                        raise GridError(f"{path}:{lineno}: malformed map entry {entry!r}")
+                    ch, color = pair.group(1), pair.group(2)
+                    if ch == BACKGROUND:
+                        raise GridError(f"{path}:{lineno}: '.' is background and cannot be mapped")
+                    if ch in charmap and charmap[ch] != color:
+                        raise GridError(
+                            f"{path}:{lineno}: {ch!r} mapped twice "
+                            f"({charmap[ch]!r} then {color!r})"
+                        )
+                    charmap[ch] = color
+            else:
+                headers[key] = value
+            continue
+        if not line:
+            continue
+        rows.append(line)
+
+    return headers, charmap, rows
+
+
+def _derive(
+    path: Path,
+    headers: dict[str, str],
+    charmap: dict[str, str],
+    rows: list[str],
+    stack: tuple[Path, ...],
+) -> tuple[dict[str, str], dict[str, str], list[str]]:
+    """Build a grid from another one plus a transform.
+
+    The derived file carries no rows of its own; everything it does not state is
+    inherited from its source.
+    """
+    if rows:
+        raise GridError(f"{path}: a file with 'from' must have no grid rows of its own")
+
+    name = headers.get("transform")
+    if name is None:
+        raise GridError(f"{path}: 'from' needs a 'transform'")
+    if name not in TRANSFORMS:
+        raise GridError(f"{path}: unknown transform {name!r}; known: {', '.join(sorted(TRANSFORMS))}")
+
+    source_path = (path.parent / headers["from"]).resolve()
+    if source_path in stack:
+        chain = " -> ".join(p.name for p in (*stack, source_path))
+        raise GridError(f"{path}: 'from' forms a cycle: {chain}")
+    if len(stack) >= MAX_DERIVATION_DEPTH:
+        raise GridError(f"{path}: 'from' nested deeper than {MAX_DERIVATION_DEPTH}")
+
+    source = parse(source_path, stack=(*stack, path.resolve()))
+
+    inherited = dict(source.headers)
+    inherited.pop("from", None)
+    inherited.pop("transform", None)
+    if name in SWAPS_AXES:
+        inherited["size"] = f"{source.height}x{source.width}"
+    merged = {**inherited, **headers}
+
+    return merged, (charmap or dict(source.charmap)), TRANSFORMS[name](source.rows)
 
 
 def check(grid: Grid, palette: dict[str, tuple[int, int, int]]) -> list[str]:

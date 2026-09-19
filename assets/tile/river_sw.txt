@@ -1,21 +1,2 @@
-# type: tile
-# size: 16x16
-# light: upper-left
-# map: g=grass_base a=grass_hi s=grass_shadow
-# map: h=water_hi w=water_base d=water_shadow
-gggggggggggggggg
-ggggggggggggggag
-gggggggggggggggg
-ssssssssssssgggg
-ddddddddddddsggg
-wwddwwwwwwwdsggg
-wwwwwwwwwwwdsggg
-wwwwwhhwwwwdsggg
-wwwwwwwwwwwdsggg
-whhwwwwwwwwdsggg
-wwwwwwwwwdddsggg
-ddddwwwwwwwdsggg
-ssssdwwwwwwdsggg
-gggsdwwwhhwdsggg
-gagsdwwwwwwdsggg
-gggsdwwwwwwdsggg
+# from: river_ne.txt
+# transform: rotate_180

@@ -13,7 +13,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
-from gridfile import GridError, check, load_palette, parse, parse_background  # noqa: E402
+from gridfile import TRANSFORMS, GridError, check, load_palette, parse, parse_background  # noqa: E402
 from render import output_dir, to_image  # noqa: E402
 from validate import collect  # noqa: E402
 
@@ -188,6 +188,131 @@ class TargetPathTest(unittest.TestCase):
     def test_relative_override_is_resolved(self):
         with contextlib.chdir(REPO_ROOT / "tools"):
             self.assertEqual(output_dir(REPO_ROOT / "assets" / "a.txt", Path("out")), REPO_ROOT / "tools" / "out")
+
+
+class TransformTest(unittest.TestCase):
+    ROWS = ["ab", "cd", "ef"]  # 2 wide, 3 tall, so the rotations are visible
+
+    def test_mirror_x(self):
+        self.assertEqual(TRANSFORMS["mirror_x"](self.ROWS), ["ba", "dc", "fe"])
+
+    def test_mirror_y(self):
+        self.assertEqual(TRANSFORMS["mirror_y"](self.ROWS), ["ef", "cd", "ab"])
+
+    def test_rotate_180_is_both_mirrors(self):
+        both = TRANSFORMS["mirror_x"](TRANSFORMS["mirror_y"](self.ROWS))
+        self.assertEqual(TRANSFORMS["rotate_180"](self.ROWS), both)
+        self.assertEqual(TRANSFORMS["rotate_180"](self.ROWS), ["fe", "dc", "ba"])
+
+    def test_rotate_cw_swaps_the_axes(self):
+        self.assertEqual(TRANSFORMS["rotate_cw"](self.ROWS), ["eca", "fdb"])
+
+    def test_rotate_ccw_swaps_the_axes(self):
+        self.assertEqual(TRANSFORMS["rotate_ccw"](self.ROWS), ["bdf", "ace"])
+
+    def test_four_quarter_turns_return_to_the_start(self):
+        rows = self.ROWS
+        for _ in range(4):
+            rows = TRANSFORMS["rotate_cw"](rows)
+        self.assertEqual(rows, self.ROWS)
+
+
+class DerivedGridTest(unittest.TestCase):
+    SOURCE = "# type: tile\n# size: 2x3\n# light: upper-left\n# map: a=outline b=skin_base\n" "ab\nba\nab\n"
+
+    def setUp(self):
+        self.directory = Path(tempfile.mkdtemp())
+        (self.directory / "source.txt").write_text(self.SOURCE, encoding="utf-8")
+
+    def derived(self, body: str, name: str = "derived.txt") -> Path:
+        path = self.directory / name
+        path.write_text(body, encoding="utf-8")
+        return path
+
+    def test_transform_is_applied(self):
+        grid = parse(self.derived("# from: source.txt\n# transform: mirror_x\n"))
+        self.assertEqual(grid.rows, ["ba", "ab", "ba"])
+
+    def test_headers_are_inherited(self):
+        grid = parse(self.derived("# from: source.txt\n# transform: mirror_x\n"))
+        self.assertEqual(grid.type, "tile")
+        self.assertEqual((grid.width, grid.height), (2, 3))
+        self.assertEqual(grid.charmap, {"a": "outline", "b": "skin_base"})
+        self.assertEqual(grid.headers["light"], "upper-left")
+
+    def test_a_stated_header_overrides_the_inherited_one(self):
+        grid = parse(self.derived("# from: source.txt\n# transform: mirror_x\n# type: item\n"))
+        self.assertEqual(grid.type, "item")
+
+    def test_rotation_swaps_the_declared_size(self):
+        grid = parse(self.derived("# from: source.txt\n# transform: rotate_cw\n"))
+        self.assertEqual((grid.width, grid.height), (3, 2))
+        self.assertEqual(grid.rows, ["aba", "bab"])
+
+    def test_rows_of_its_own_are_rejected(self):
+        with self.assertRaisesRegex(GridError, "must have no grid rows"):
+            parse(self.derived("# from: source.txt\n# transform: mirror_x\nab\n"))
+
+    def test_transform_is_required(self):
+        with self.assertRaisesRegex(GridError, "needs a 'transform'"):
+            parse(self.derived("# from: source.txt\n"))
+
+    def test_unknown_transform(self):
+        with self.assertRaisesRegex(GridError, "unknown transform"):
+            parse(self.derived("# from: source.txt\n# transform: shear\n"))
+
+    def test_missing_source(self):
+        with self.assertRaises(GridError):
+            parse(self.derived("# from: nope.txt\n# transform: mirror_x\n"))
+
+    def test_self_reference(self):
+        with self.assertRaisesRegex(GridError, "cycle"):
+            parse(self.derived("# from: derived.txt\n# transform: mirror_x\n"))
+
+    def test_two_file_cycle(self):
+        self.derived("# from: pong.txt\n# transform: mirror_x\n", "ping.txt")
+        self.derived("# from: ping.txt\n# transform: mirror_x\n", "pong.txt")
+        with self.assertRaisesRegex(GridError, "cycle"):
+            parse(self.directory / "ping.txt")
+
+    def test_a_chain_of_derivations_resolves(self):
+        self.derived("# from: source.txt\n# transform: mirror_x\n", "one.txt")
+        grid = parse(self.derived("# from: one.txt\n# transform: mirror_x\n", "two.txt"))
+        self.assertEqual(grid.rows, ["ab", "ba", "ab"])
+
+
+class CommentTest(unittest.TestCase):
+    def test_a_hash_line_without_a_colon_is_a_comment(self):
+        grid = parse(write(GOOD.replace("# map:", "#\n# why this shape\n# map:")))
+        self.assertEqual(len(grid.rows), 3)
+
+    def test_a_hash_line_with_a_colon_must_still_parse(self):
+        with self.assertRaisesRegex(GridError, "malformed header"):
+            parse(write(GOOD.replace("# map:", "# NotAKey: x\n# map:")))
+
+
+class RiverDerivationTest(unittest.TestCase):
+    """The shipped bends are derived, so this pins the migration."""
+
+    TILES = REPO_ROOT / "assets" / "tile"
+
+    def test_nw_is_ne_mirrored(self):
+        source = parse(self.TILES / "river_ne.txt")
+        self.assertEqual(parse(self.TILES / "river_nw.txt").rows, TRANSFORMS["mirror_x"](source.rows))
+
+    def test_se_is_ne_flipped(self):
+        source = parse(self.TILES / "river_ne.txt")
+        self.assertEqual(parse(self.TILES / "river_se.txt").rows, TRANSFORMS["mirror_y"](source.rows))
+
+    def test_sw_is_ne_turned_around(self):
+        source = parse(self.TILES / "river_ne.txt")
+        self.assertEqual(parse(self.TILES / "river_sw.txt").rows, TRANSFORMS["rotate_180"](source.rows))
+
+    def test_the_derived_bends_carry_no_rows_of_their_own(self):
+        for name in ("river_nw", "river_se", "river_sw"):
+            with self.subTest(name):
+                text = (self.TILES / f"{name}.txt").read_text(encoding="utf-8")
+                self.assertTrue(all(line.startswith("#") or not line.strip() for line in text.splitlines()))
 
 
 class MasterPaletteTest(unittest.TestCase):

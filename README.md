@@ -20,7 +20,13 @@ python3 -m venv .venv
 .venv/bin/python tools/validate.py       # 構造の検査。異常時は非ゼロ終了
 .venv/bin/python tools/check_colors.py   # 隣接色の分離度。助言なので hard failure のみ非ゼロ
 .venv/bin/python tools/render.py         # assets/**/*.txt -> build/**/*.png（等倍 + x8）
+.venv/bin/python tools/tilemap.py        # tile を並べる。継ぎ目と接続の確認用
 .venv/bin/python tools/contact_sheet.py  # 全アセットを1枚に並べる
+```
+
+```sh
+tools/tilemap.py --repeat river_v --grid 4x4      # 1枚を敷き詰める
+tools/tilemap.py --layout layouts/example.txt     # マップを組む
 ```
 
 各ツールとも、引数にファイルやディレクトリを渡せば対象を絞れる。
@@ -40,8 +46,9 @@ palette/master.json        色名 -> RGB。色は必ずここ経由で参照す�
 types/<type>/SPEC.md       寸法・構成要素などの機械的な規約
 types/<type>/reference/    合格済みアセット＝お手本。絵柄はここで揃える
 assets/<type>/<name>.txt   生成物のソース（これが正）
-tools/                     render / validate / check_colors / contact_sheet
-tests/                     tools/ のテスト
+tools/                     render / validate / check_colors / tilemap / contact_sheet
+layouts/                   tilemap.py --layout に渡すマップ
+tests/                     tools/ のテストとフィクスチャ
 build/                     PNG 出力（git 管理外）
 docs/HANDOFF.md            設計の経緯と、確定／未確定の区別
 seed/face32.py             リポジトリ化前の原型。分解済みで、もう実行経路にない
@@ -76,17 +83,39 @@ types/<type>/SPEC.md と reference/ を読む
 適用しない。タイルは隣接して敷き詰めるため、輪郭を回すと常に格子が見える。
 `tile` の縁は地続きにし、輪郭は城のような**物体のシルエット**にだけ使う。
 
-### 未対応: タイルを並べて確認する手段がない
+### 継ぎ目の機械チェックは作らなかった
 
-`contact_sheet.py` は1枚ずつ並べるので、接合部も継ぎ目も見えない。
-2x2 の城（`castle_*` 4枚）と、川の継ぎ目検証の両方でこれが必要になり、
-その都度スクリプトを書いている。**2回続けて必要になったので、
-ツール化の候補としては最有力。**
+「並べて初めて見える欠陥」を機械で拾えるか試した。タイルをトーラスとみなして
+巡回的な行・列差分を取り、継ぎ目付近の突出を見る方式。壊れた `river_v` を
+`tests/fixtures/river_v_seam_bug.txt` に再現して測った。
 
-川の曲がり4種は互いのミラーで、生成時は1つのマスクを反転して作った。
-現状は4枚を独立した `.txt` として持っているため、直すときは4枚とも直す必要がある。
-HANDOFF 2.4 の「ミラー反転はコード側の決定的変形で生成する」を適用すべき箇所だが、
-その変形ツールもまだない。
+| タイル | 継ぎ目付近の突出 |
+|---|---|
+| **壊れた `river_v`** | **4.0** |
+| `castle_se` / `castle_sw`（正常） | 12.0 |
+| `river_ne` ほか曲がり（正常） | 8.0 |
+| `plain` / `river_v` / `river_h`（正常） | 0.0 以下 |
+
+**分離できなかった。** 城の分割タイルも曲がりも、そもそも自分自身と
+敷き詰めるものではないので端で大きく変化するのが正常である。
+自己タイリングするタイルに限れば分離できるが、そのためには
+「このタイルは自己タイリングする」という宣言をヘッダに足す必要がある。
+真陽性1例のために形式を広げる価値はないと判断して**実装しなかった**。
+経緯は [`docs/2026-09-19-tiling-tools-spec.md`](docs/2026-09-19-tiling-tools-spec.md)。
+
+代わりに `tilemap.py` が全タイルの 3x3 画像を既定で出す。目視が答えになる。
+
+### ミラーはコピーで持たない
+
+川の曲がり4種のうち3枚は、本体を持たない派生ファイルにした（HANDOFF 2.4）。
+
+```
+# from: river_ne.txt
+# transform: mirror_x
+```
+
+移行時、派生に置き換えた後の PNG が置き換え前と**ピクセル単位で一致する**ことを
+確認している。
 
 ### 収束回数の実測（item 1点目）
 

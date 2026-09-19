@@ -13,6 +13,9 @@
 - **パレットに色を足したら `tools/check_colors.py` を通す。** 隣り合った色が
   区別できるかを見る。ただし**目視の代替にはならない**（実測で、目視が見つけた
   11件のうちこのチェックが拾えたものは0件）。拾えるのは「別名だが実質同じ色」だけ。
+- **`tile` 型は1枚の目視では終わらない。`tools/tilemap.py` で並べて継ぎ目を見る。**
+  川の初版は1枚では完璧に見えて、並べると境界に暗い帯が出た。
+  `validate.py` も `check_colors.py` も通過する。
 - **完成したら `tools/contact_sheet.py` を更新する。** 型をまたいだ絵柄のズレはここで見つかる。
 
 ## コマンド
@@ -21,9 +24,12 @@
 .venv/bin/python tools/validate.py            # 構造の検査（異常時は非ゼロ終了）
 .venv/bin/python tools/check_colors.py        # 隣接色の分離度（助言。hard failure のみ非ゼロ）
 .venv/bin/python tools/render.py              # txt -> png（等倍と x8）
+.venv/bin/python tools/tilemap.py             # tile を 3x3 で並べる（継ぎ目の確認）
 .venv/bin/python tools/contact_sheet.py       # build/contact_sheet.png
 .venv/bin/python -m unittest discover -s tests  # tools/ を触ったとき
 ```
+
+`tilemap.py --layout layouts/example.txt` でマップを組んで接続も確認できる。
 
 初回のみ: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
 
@@ -44,6 +50,22 @@
 - `map` の値は `palette/master.json` のキー。色は必ずここ経由で参照する。
 - `.` は背景。`bg` は `transparent` / `#rrggbb` / `gradient:#rrggbb->#rrggbb`。
 - `# max_colors: N` を書くと使用色数の上限が検査される（任意）。
+- コロンを含まない `#` 行はコメント。コロンを含む行は正しいヘッダでなければ失敗する。
+
+## ミラーで作れるものをコピーで持たない
+
+反転や回転で作れるアセットは、本体を持たない派生ファイルにする（HANDOFF 2.4）。
+
+```
+# from: river_ne.txt
+# transform: mirror_x
+```
+
+変形は `mirror_x` / `mirror_y` / `rotate_180` / `rotate_cw` / `rotate_ccw`。
+書かなかったヘッダは由来元から継承する。
+
+**変形は光源を一緒に動かす。** 陰影が変形軸について対称なものにしか使えない。
+川は使えるが、顔グラや城には使えない。機械では検査していない。
 
 ## 勝手に決めないこと
 
