@@ -27,5 +27,18 @@
 
   "metal_hi": "#f0d878",
   "metal_base": "#c09030",
-  "metal_shadow": "#806018"
+  "metal_shadow": "#806018",
+
+  "grass_hi": "#7ab04a",
+  "grass_base": "#4f8c36",
+  "grass_shadow": "#356b28",
+
+  "stone_hi": "#dfe3ea",
+  "stone_base": "#9fa8b4",
+  "stone_shadow": "#6b7380",
+  "stone_dark": "#424854",
+
+  "roof_hi": "#c85a4a",
+  "roof_base": "#9c3a32",
+  "roof_shadow": "#6b241f"
 }
