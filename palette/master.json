@@ -40,5 +40,9 @@
 
   "roof_hi": "#c85a4a",
   "roof_base": "#9c3a32",
-  "roof_shadow": "#6b241f"
+  "roof_shadow": "#6b241f",
+
+  "water_hi": "#8fd4ea",
+  "water_base": "#3f93c8",
+  "water_shadow": "#2a6a9c"
 }

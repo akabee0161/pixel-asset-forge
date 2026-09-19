@@ -1,0 +1,22 @@
+# type: tile
+# size: 16x16
+# light: upper-left
+# map: g=grass_base a=grass_hi s=grass_shadow
+# map: h=water_hi w=water_base d=water_shadow
+# map: o=outline p=wood_hi q=wood_base r=wood_shadow t=wood_dark
+gggsdwwwwwwdsggg
+gggsdwwwwwwdsggg
+gagsdwhhwwwdsggg
+gggsdwwwwwwdsggg
+gggsdddwwwwdsggg
+gggsdwwwwwwdsggg
+gpptpptpptpptppg
+gqqtqqtqqtqqtqqg
+gqqtqqtqqtqqtqqg
+grrtrrtrrtrrtrrg
+goooooooooooooog
+gggsddddddddsggg
+gggsdwwwhhwdsggg
+gggsdwwwwwwdsgag
+gggsdwwwwwwdsggg
+gggsdwwwwwwdsggg
