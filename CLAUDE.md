@@ -10,12 +10,16 @@
   絵柄は散文ではなく reference で揃える。
 - **目視の前に `tools/validate.py` を通す。** 行長・未定義文字・パレット外参照は
   機械で落とす。目視はそれを通ってからにする。
+- **パレットに色を足したら `tools/check_colors.py` を通す。** 隣り合った色が
+  区別できるかを見る。ただし**目視の代替にはならない**（実測で、目視が見つけた
+  11件のうちこのチェックが拾えたものは0件）。拾えるのは「別名だが実質同じ色」だけ。
 - **完成したら `tools/contact_sheet.py` を更新する。** 型をまたいだ絵柄のズレはここで見つかる。
 
 ## コマンド
 
 ```sh
-.venv/bin/python tools/validate.py            # 機械チェック（異常時は非ゼロ終了）
+.venv/bin/python tools/validate.py            # 構造の検査（異常時は非ゼロ終了）
+.venv/bin/python tools/check_colors.py        # 隣接色の分離度（助言。hard failure のみ非ゼロ）
 .venv/bin/python tools/render.py              # txt -> png（等倍と x8）
 .venv/bin/python tools/contact_sheet.py       # build/contact_sheet.png
 .venv/bin/python -m unittest discover -s tests  # tools/ を触ったとき

@@ -17,7 +17,8 @@ python3 -m venv .venv
 ## 使い方
 
 ```sh
-.venv/bin/python tools/validate.py       # 機械チェック。異常時は非ゼロ終了
+.venv/bin/python tools/validate.py       # 構造の検査。異常時は非ゼロ終了
+.venv/bin/python tools/check_colors.py   # 隣接色の分離度。助言なので hard failure のみ非ゼロ
 .venv/bin/python tools/render.py         # assets/**/*.txt -> build/**/*.png（等倍 + x8）
 .venv/bin/python tools/contact_sheet.py  # 全アセットを1枚に並べる
 ```
@@ -39,7 +40,7 @@ palette/master.json        色名 -> RGB。色は必ずここ経由で参照す�
 types/<type>/SPEC.md       寸法・構成要素などの機械的な規約
 types/<type>/reference/    合格済みアセット＝お手本。絵柄はここで揃える
 assets/<type>/<name>.txt   生成物のソース（これが正）
-tools/                     render / validate / contact_sheet
+tools/                     render / validate / check_colors / contact_sheet
 tests/                     tools/ のテスト
 build/                     PNG 出力（git 管理外）
 docs/HANDOFF.md            設計の経緯と、確定／未確定の区別
@@ -104,6 +105,47 @@ types/<type>/SPEC.md と reference/ を読む
 
 機械チェックで落ちた回数はここでも0。アセット5点を通して0のままなので、
 `validate.py` が往復回数を削っているという設計の前提は今のところ裏付けが取れていない。
+
+### 機械チェックと目視は代替関係ではない
+
+上の結果を受けて、[pixellint](https://github.com/Li-Mingshuang/pixellint) の
+**隣接色の分離度チェック**を `tools/check_colors.py` として取り入れ、効果を実測した。
+仕様と経緯は [`docs/2026-09-19-color-separation-spec.md`](docs/2026-09-19-color-separation-spec.md)。
+
+| | 結果 |
+|---|---|
+| 目視が見つけた11件のうち、このチェックが拾えたもの | **0件** |
+| 目視が5アセット分見逃していた欠陥のうち、このチェックが拾ったもの | **1件** |
+
+拾えたのは `types/face/reference/knight.txt` の `outline` と `pupil` が
+**同じ `#1a1228` で、瞳孔が目の輪郭に同化している**こと。何度も目視して
+気付かなかった。逆に目視が見つけた「目地が消えた」「塔が壁と分離していない」は
+*同じ色*が隣り合っていたケースで、色ペアが発生しないため原理的に検出できない。
+
+**機械は「同じ色に別の名前が付いている」を見つけ、目は構図を見つける。**
+深いチェックを足しても目視の周回は減らない、というのが現時点の結論。
+
+pixellint 本来のしきい値（ΔE 22）をそのまま使うと、階調の隣り合いが全部警告に
+なった。同リポジトリ自身が「厳しすぎるチェッカーは拾う以上のコストを払う」と
+記録しており、その罠に即座に踏んだ。収束済みアセットが無警告になる ΔE 10 まで下げてある。
+
+### 未解決: knight の瞳孔
+
+`check_colors.py` は `types/face/reference/knight.txt` で hard failure を出したまま。
+直すには `pupil` の色を決める必要があり、これは未確定項目（マスターパレットの
+具体的な色）なので保留している。`hair_hi` と `cloth_hi` にも同じ重複があるが、
+この2色は現時点でどのアセットでも隣接していない。
+
+### 手書きグリッドは約32pxで限界が来る（知見）
+
+[pixellint](https://github.com/Li-Mingshuang/pixellint) と
+[godot-pixel-studio](https://github.com/khalil852/godot-pixel-studio) が独立に
+「32px を超えると手書きグリッドは読めなくなる（64×64 は4096個の判断）」と書いている。
+**規約にはしていない**が、本リポジトリでも整合する挙動が出た。
+
+16x16 の宝箱は16行を直接書いたのに対し、32x32 の城は直接書けず、
+`L_BODY = "otnnnmo"` のように名前を付けた部品を組んで行を作っている。
+32x32 の時点で既に直接記述が破綻していたことになる。
 
 ### 型の SPEC
 
