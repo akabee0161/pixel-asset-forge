@@ -1,0 +1,22 @@
+{
+  "outline": "#1a1228",
+
+  "hair_hi": "#7a8fd0",
+  "hair_base": "#48558f",
+  "hair_shadow": "#333c66",
+  "hair_dark": "#232842",
+
+  "skin_hi": "#ffe0c0",
+  "skin_base": "#f0c49a",
+  "skin_shadow": "#c98f6a",
+  "skin_deep": "#96604a",
+
+  "eye_white": "#f8f0e8",
+  "iris": "#5a7ac0",
+  "pupil": "#1a1228",
+  "mouth": "#a85f52",
+
+  "cloth_hi": "#7a8fd0",
+  "cloth_base": "#4a5588",
+  "cloth_shadow": "#2e3557"
+}
