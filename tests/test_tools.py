@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import sys
 import tempfile
 import unittest
@@ -13,7 +14,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 from gridfile import GridError, check, load_palette, parse, parse_background  # noqa: E402
-from render import to_image  # noqa: E402
+from render import output_dir, to_image  # noqa: E402
+from validate import collect  # noqa: E402
 
 PALETTE = {"outline": (10, 20, 30), "skin_base": (200, 150, 100)}
 
@@ -152,6 +154,40 @@ class RenderTest(unittest.TestCase):
         image = to_image(parse(write(GOOD)), PALETTE, scale=8)
         self.assertEqual(image.size, (32, 24))
         self.assertEqual(image.getpixel((8, 8)), (*PALETTE["skin_base"], 255))
+
+
+class TargetPathTest(unittest.TestCase):
+    """A relative target used to leak through as a relative output path."""
+
+    REFERENCE = "types/face/reference/knight.txt"
+
+    def test_relative_target_becomes_absolute(self):
+        with contextlib.chdir(REPO_ROOT):
+            grids = collect([Path(self.REFERENCE)])
+        self.assertEqual(grids, [REPO_ROOT / self.REFERENCE])
+
+    def test_target_outside_the_working_directory_resolves(self):
+        with contextlib.chdir(REPO_ROOT / "tools"):
+            grids = collect([Path("..") / self.REFERENCE])
+        self.assertEqual(grids, [REPO_ROOT / self.REFERENCE])
+
+    def test_missing_target_is_rejected(self):
+        with self.assertRaises(SystemExit):
+            collect([REPO_ROOT / "assets" / "nope.txt"])
+
+    def test_assets_render_into_build(self):
+        self.assertEqual(
+            output_dir(REPO_ROOT / "assets" / "item" / "chest.txt", None),
+            REPO_ROOT / "build" / "item",
+        )
+
+    def test_references_render_beside_the_grid(self):
+        path = REPO_ROOT / self.REFERENCE
+        self.assertEqual(output_dir(path, None), path.parent)
+
+    def test_relative_override_is_resolved(self):
+        with contextlib.chdir(REPO_ROOT / "tools"):
+            self.assertEqual(output_dir(REPO_ROOT / "assets" / "a.txt", Path("out")), REPO_ROOT / "tools" / "out")
 
 
 class MasterPaletteTest(unittest.TestCase):

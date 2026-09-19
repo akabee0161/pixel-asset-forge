@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from gridfile import REPO_ROOT, Grid, GridError, check, load_palette, parse
+from gridfile import REPO_ROOT, Grid, GridError, check, display, load_palette, parse
 from render import to_image
 from validate import collect, default_targets
 
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     groups: dict[str, list[tuple[Grid, Image.Image]]] = defaultdict(list)
     failed = 0
     for path in collect(args.targets or default_targets()):
-        rel = path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+        rel = display(path)
         try:
             grid = parse(path)
         except GridError as exc:
@@ -108,10 +108,11 @@ def main(argv: list[str] | None = None) -> int:
             draw.text((x, top + image.height + 2), grid.name[:cell_w // 6], fill=LABEL_FG, font=font)
         y += -(-len(entries) // args.columns) * (cell_h + PAD)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    sheet.save(args.output)
+    output = args.output.resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(output)
     total = sum(len(entries) for entries in groups.values())
-    print(f"ok   {total} asset(s) -> {args.output.relative_to(REPO_ROOT)}")
+    print(f"ok   {total} asset(s) -> {display(output)}")
     return 1 if failed else 0
 
 

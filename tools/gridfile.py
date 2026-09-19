@@ -236,6 +236,11 @@ def check(grid: Grid, palette: dict[str, tuple[int, int, int]]) -> list[str]:
     return errors
 
 
+def display(path: Path) -> Path:
+    """Path as written in messages: repo-relative when it is inside the repo."""
+    return path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+
+
 def find_grids(root: Path) -> list[Path]:
     """All ``*.txt`` grids under ``root``, in stable order."""
     return sorted(p for p in root.rglob("*.txt") if p.is_file())

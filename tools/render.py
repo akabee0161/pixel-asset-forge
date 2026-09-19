@@ -21,7 +21,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from gridfile import BACKGROUND, REPO_ROOT, Grid, GridError, check, find_grids, load_palette, parse
+from gridfile import BACKGROUND, REPO_ROOT, Grid, GridError, check, display, find_grids, load_palette, parse
 
 from validate import collect, default_targets
 
@@ -47,7 +47,7 @@ def to_image(grid: Grid, palette: dict[str, tuple[int, int, int]], scale: int = 
 def output_dir(path: Path, override: Path | None) -> Path:
     """Where the PNGs for ``path`` belong."""
     if override is not None:
-        return override
+        return override.resolve()
     if path.is_relative_to(REPO_ROOT / "assets"):
         return REPO_ROOT / "build" / path.relative_to(REPO_ROOT / "assets").parent
     return path.parent
@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
 
     failed = 0
     for path in grids:
-        rel = path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+        rel = display(path)
         try:
             grid = parse(path)
         except GridError as exc:
@@ -99,9 +99,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.scale != 1:
             large = destination / f"{grid.name}_x{args.scale}.png"
             to_image(grid, palette, args.scale).save(large)
-            print(f"ok   {rel} -> {large.relative_to(REPO_ROOT)}")
+            print(f"ok   {rel} -> {display(large)}")
         else:
-            print(f"ok   {rel} -> {base.with_suffix('.png').relative_to(REPO_ROOT)}")
+            print(f"ok   {rel} -> {display(base.with_suffix('.png'))}")
 
     if failed:
         print(f"\n{failed} of {len(grids)} grid(s) failed", file=sys.stderr)

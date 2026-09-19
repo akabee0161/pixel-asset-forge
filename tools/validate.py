@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from gridfile import REPO_ROOT, GridError, check, find_grids, load_palette, parse
+from gridfile import REPO_ROOT, GridError, check, display, find_grids, load_palette, parse
 
 
 def default_targets() -> list[Path]:
@@ -25,8 +25,14 @@ def default_targets() -> list[Path]:
 
 
 def collect(targets: list[Path]) -> list[Path]:
+    """Expand targets to absolute grid paths.
+
+    Absolute, so callers can locate a grid relative to the repo root regardless
+    of the working directory the command was typed from.
+    """
     grids: list[Path] = []
     for target in targets:
+        target = target.resolve()
         if target.is_dir():
             grids.extend(find_grids(target))
         elif target.is_file():
@@ -55,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
 
     failed = 0
     for path in grids:
-        rel = path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+        rel = display(path)
         try:
             grid = parse(path)
         except GridError as exc:
