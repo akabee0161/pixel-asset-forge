@@ -10,11 +10,15 @@
   絵柄は散文ではなく reference で揃える。
 - **目視の前に `tools/validate.py` を通す。** 行長・未定義文字・パレット外参照は
   機械で落とす。目視はそれを通ってからにする。
-- **パレットに色を足すなら、描く前に `check_colors.py` のしきい値へ当てる。**
-  隣り合わせる**予定**のペアを捨てスクリプトで先に測り、`has_lightness_edge` か
-  ΔE のどちらかを超える色を選んでから描く。描いた後に通すと（実測どおり）ほとんど
-  何も拾わないが、描く前に使うと設計の道具になる。草原セットでは樹冠の初案が
-  `grass_base` と ΔE 5.9 で、描く前に却下できた。
+- **パレットに色を足すなら、描く前に `tools/probe_colors.py` で測る。**
+  隣り合わせる**予定**のペアを先に当てて、`has_lightness_edge` か ΔE のどちらかを
+  超える色を選んでから描く。描いた後に `check_colors.py` を通しても（実測どおり）
+  ほとんど何も拾わないが、描く前に使うと設計の道具になる。草原セットでは樹冠の
+  初案が `grass_base` と ΔE 5.9 で、描く前に却下できた。
+
+  ```sh
+  tools/probe_colors.py --candidate '#2e8055' --against grass_base grass_hi grass_shadow
+  ```
   色を足した後も `tools/check_colors.py` は通すこと。ただし**目視の代替にはならない**
   （実測で、目視が見つけた11件のうちこのチェックが拾えたものは0件）。
 - **`tile` 型は1枚の目視では終わらない。`tools/tilemap.py` で3通り見る。**
@@ -31,6 +35,7 @@
 ```sh
 .venv/bin/python tools/validate.py            # 構造の検査（異常時は非ゼロ終了）
 .venv/bin/python tools/check_colors.py        # 隣接色の分離度（助言。hard failure のみ非ゼロ）
+.venv/bin/python tools/probe_colors.py a b    # 2色が区別できるか（描く前に使う）
 .venv/bin/python tools/render.py              # txt -> png（等倍と x8）
 .venv/bin/python tools/tilemap.py             # tile を 3x3 で並べる（継ぎ目の確認）
 .venv/bin/python tools/contact_sheet.py       # build/contact_sheet.png

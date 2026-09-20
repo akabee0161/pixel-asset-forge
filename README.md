@@ -19,6 +19,7 @@ python3 -m venv .venv
 ```sh
 .venv/bin/python tools/validate.py       # 構造の検査。異常時は非ゼロ終了
 .venv/bin/python tools/check_colors.py   # 隣接色の分離度。助言なので hard failure のみ非ゼロ
+.venv/bin/python tools/probe_colors.py   # 2色が区別できるか。色を決める前に使う
 .venv/bin/python tools/render.py         # assets/**/*.txt -> build/**/*.png（等倍 + x8）
 .venv/bin/python tools/tilemap.py        # tile を並べる。継ぎ目と接続の確認用
 .venv/bin/python tools/contact_sheet.py  # 全アセットを1枚に並べる
@@ -46,7 +47,7 @@ palette/master.json        色名 -> RGB。色は必ずここ経由で参照す�
 types/<type>/SPEC.md       寸法・構成要素などの機械的な規約
 types/<type>/reference/    合格済みアセット＝お手本。絵柄はここで揃える
 assets/<type>/<name>.txt   生成物のソース（これが正）
-tools/                     render / validate / check_colors / tilemap / contact_sheet
+tools/                     render / validate / check_colors / probe_colors / tilemap / contact_sheet
 layouts/                   tilemap.py --layout に渡すマップ
 tests/                     tools/ のテストとフィクスチャ
 build/                     PNG 出力（git 管理外）
@@ -310,11 +311,16 @@ pixellint 本来のしきい値（ΔE 22）をそのまま使うと、階調の�
 記録しており、その罠に即座に踏んだ。収束済みアセットが無警告になる ΔE 10 まで下げてある。
 
 **色を足すときは、描く前にしきい値へ当てにいくと速い。** 城内セットで10色を
-足したときは、実際に隣り合わせる予定の約100ペアを捨てスクリプトで先に測り、
-`has_lightness_edge` か ΔE のどちらかを確実に超えるように色を決めてから描いた。
-結果として20点すべてが警告0で通っている。これは `check_colors.py` が有能だった
-という話ではなく、**このチェックは描く前に使うと設計の道具になり、描いた後に
-使うと（実測どおり）ほとんど何も拾わない**ということである。
+足したときは、実際に隣り合わせる予定の約100ペアを先に測り、`has_lightness_edge` か
+ΔE のどちらかを確実に超えるように色を決めてから描いた。結果として20点すべてが
+警告0で通っている。これは `check_colors.py` が有能だったという話ではなく、
+**このチェックは描く前に使うと設計の道具になり、描いた後に使うと（実測どおり）
+ほとんど何も拾わない**ということである。
+
+この測定は `tools/probe_colors.py` にしてある。城内セットと草原セットで2回とも
+書き捨てにしていたが、毎回違っていたのは**測るペアの一覧だけ**で、計算は2回とも
+`check_colors.py` から import していた。ペアの一覧は引数で渡せるものなので、
+書き捨てにする理由が無かった。
 
 **草原セットで、この使い方が初めて色を却下した。** 樹冠用に置いた
 `leaf_hi = #3f8a3c` は `grass_base` と **ΔE 5.9 で hard failure** だった。
@@ -328,6 +334,12 @@ pixellint 本来のしきい値（ΔE 22）をそのまま使うと、階調の�
 | `#37803f` | 9.7 | 警告 |
 | `#2f7a4a` | 13.4 | 可 |
 | `#2e8055` | **17.4** | 採用 |
+
+この表は再現できる。
+
+```sh
+tools/probe_colors.py --candidate '#3f8a3c' --against grass_base grass_hi grass_shadow
+```
 
 ### 深いチェックを試して2回落としている
 
