@@ -11,7 +11,7 @@ down_base   down_walk_a   down_base   down_walk_b
 up_base     up_walk_a     up_base     up_walk_b
 left_base   left_walk_a   left_base   left_walk_b
 right_base  right_walk_a  right_base  right_walk_b
-.  .  .  .
-.  .  .  .
-.  .  .  .
-.  .  .  .
+down_atk_wind   down_atk_hit   down_base   .
+up_atk_wind     up_atk_hit     up_base     .
+left_atk_wind   left_atk_hit   left_base   .
+right_atk_wind  right_atk_hit  right_base  .
