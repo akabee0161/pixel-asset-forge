@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Assemble a unit sprite sheet from grid files.
 
-    tools/sheet.py assets/unit/roran/roran.sheet.txt
+    tools/sheet.py sheets/roran.txt
 
 A sheet definition is whitespace-separated frame names, one sheet row per line,
 exactly 12 rows (3 states x 4 directions). `.` leaves a cell transparent. It is
-the same shape as a `layouts/*.txt` file on purpose.
+the same shape as a `layouts/*.txt` file on purpose, and lives outside
+`assets/` for the same reason: the frames it names are read from
+`assets/unit/<definition name>/`.
 
     down_base  down_breathe  .  .
     up_base    up_breathe    .  .
@@ -29,6 +31,11 @@ from gridfile import REPO_ROOT, GridError, check, display, load_palette, parse
 from render import to_image
 from tilemap import read_layout
 
+# A definition lives in `sheets/<unit>.txt` and its frames in
+# `assets/unit/<unit>/`, the same split `layouts/` and `assets/tile/` use. The
+# definition has to sit outside `assets/` because `validate.py` and `render.py`
+# rglob every `*.txt` under it and would try to parse the definition as a grid.
+UNIT_DIR = REPO_ROOT / "assets" / "unit"
 OUTPUT_DIR = REPO_ROOT / "build" / "sheets"
 
 ROWS = 12
@@ -179,6 +186,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("definition", type=Path, help="sheet definition file")
     parser.add_argument("--scale", type=int, default=4, help="preview enlargement (default: 4)")
     parser.add_argument("-o", "--outdir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument(
+        "--unitdir", type=Path, default=None,
+        help="where the frame grids are (default: assets/unit/<definition name>)",
+    )
     args = parser.parse_args(argv)
 
     if args.scale < 1:
@@ -191,15 +202,16 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     rows = read_sheet(args.definition)
+    name = args.definition.stem
+    unit_dir = args.unitdir if args.unitdir is not None else UNIT_DIR / name
     try:
-        frames = load_frames(rows, palette, args.definition.parent)
+        frames = load_frames(rows, palette, unit_dir)
     except GridError as exc:
         print(f"FAIL {exc}", file=sys.stderr)
         return 1
     canvas = compose_sheet(rows, frames)
 
     args.outdir.mkdir(parents=True, exist_ok=True)
-    name = args.definition.stem.removesuffix(".sheet")
     destination = args.outdir / f"{name}.png"
     canvas.save(destination)
     print(f"ok   {display(destination)}  {canvas.width}x{canvas.height}")
