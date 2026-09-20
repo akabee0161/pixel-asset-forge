@@ -1,0 +1,2 @@
+# from: left_base.txt
+# transform: mirror_x
