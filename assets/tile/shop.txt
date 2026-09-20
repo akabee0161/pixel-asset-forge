@@ -1,0 +1,21 @@
+# type: tile
+# size: 16x16
+# light: upper-left
+# map: o=outline g=grass_base s=grass_shadow r=roof_hi f=roof_base c=roof_shadow
+# map: w=wood_base b=wood_shadow d=wood_dark y=metal_hi
+gggggggggggggggg
+gggggggggggggggg
+gggggggooggggggg
+ggggggoffogggggg
+gggggorffcoggggg
+ggggorrffccogggg
+gggorrrffcccoggg
+ggggooowwbbogggg
+ggggoyyowbboddgg
+ggggoyyoobbogoyg
+ggggoooddbbogoyg
+ggggoooooooogggg
+gggssssssssssggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
