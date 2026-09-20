@@ -7,10 +7,10 @@ down_base   down_breathe   .  .
 up_base     up_breathe     .  .
 left_base   left_breathe   .  .
 right_base  right_breathe  .  .
-.  .  .  .
-.  .  .  .
-.  .  .  .
-.  .  .  .
+down_base   down_walk_a   down_base   down_walk_b
+up_base     up_walk_a     up_base     up_walk_b
+left_base   left_walk_a   left_base   left_walk_b
+right_base  right_walk_a  right_base  right_walk_b
 .  .  .  .
 .  .  .  .
 .  .  .  .

@@ -1,0 +1,2 @@
+# from: left_walk_a.txt
+# transform: mirror_x
