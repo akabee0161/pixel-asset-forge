@@ -78,6 +78,7 @@ class SeamFixtureTest(unittest.TestCase):
     deleted by accident, and to pin the fact that the cheap checks miss it."""
 
     FIXTURE = REPO_ROOT / "tests" / "fixtures" / "river_v_seam_bug.txt"
+    FIXED = REPO_ROOT / "tests" / "fixtures" / "river_v_first_version.txt"
 
     def test_the_broken_tile_still_passes_the_cheap_checks(self):
         from check_colors import inspect
@@ -89,10 +90,16 @@ class SeamFixtureTest(unittest.TestCase):
         self.assertEqual(inspect(grid, palette), ([], []))
 
     def test_it_differs_from_the_fixed_tile_only_at_the_edges(self):
+        """Both sides are fixtures on purpose.
+
+        This used to compare the broken tile against the live assets/tile/river_v.txt.
+        That tile was redrawn when the grassland set gave the river a two-pixel dirt
+        bank, and every row started differing - which said nothing about the seam bug.
+        """
         from gridfile import parse
 
         broken = parse(self.FIXTURE).rows
-        fixed = parse(REPO_ROOT / "assets" / "tile" / "river_v.txt").rows
+        fixed = parse(self.FIXED).rows
         differing = [y for y, (a, b) in enumerate(zip(broken, fixed)) if a != b]
         self.assertEqual(differing, [0, 15])
 

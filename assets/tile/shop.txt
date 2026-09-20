@@ -1,21 +1,26 @@
 # type: tile
 # size: 16x16
 # light: upper-left
-# map: o=outline g=grass_base s=grass_shadow r=roof_hi f=roof_base c=roof_shadow
-# map: w=wood_base b=wood_shadow d=wood_dark y=metal_hi
-gggggggggggggggg
-gggggggggggggggg
+# The same cottage run as a shop. It used to differ from village by a two-pixel
+# sign and the two were hard to tell apart on a map; now it has a striped
+# awning across the front and a board hanging off the eaves.
+# map: g=grass_base s=grass_shadow o=outline
+# map: r=roof_hi f=roof_base c=roof_shadow
+# map: t=stone_hi n=stone_base
+# map: w=wood_base v=wood_hi b=wood_shadow x=wood_dark l=metal_hi
+ggssggggggggssgg
 gggggggooggggggg
-ggggggoffogggggg
-gggggorffcoggggg
-ggggorrffccogggg
-gggorrrffcccoggg
-ggggooowwbbogggg
-ggggoyyowbboddgg
-ggggoyyoobbogoyg
-ggggoooddbbogoyg
-ggggoooooooogggg
-gggssssssssssggg
-gggggggggggggggg
-gggggggggggggggg
-gggggggggggggggg
+ggggggorrogggggg
+gggggorrffoggggg
+ggggorrrfffogggg
+gggorrrrfffccogg
+ggorrrrrfffcccog
+gorrrrrffffcccog
+goooooooooooooog
+ggortrtrtrtrtogg
+ggotllttxxxttovb
+ggotllttwwbttovb
+ggotttttwwbttogg
+ggonnnnnwwbnnogg
+ggoooooooooooogg
+ggssssssssssssgg

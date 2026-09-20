@@ -33,6 +33,14 @@
   "grass_base": "#4f8c36",
   "grass_shadow": "#356b28",
 
+  "leaf_hi": "#2e8055",
+  "leaf_base": "#1f5c40",
+  "leaf_shadow": "#133d2b",
+
+  "dirt_hi": "#b59a70",
+  "dirt_base": "#8d7450",
+  "dirt_shadow": "#63502f",
+
   "stone_hi": "#dfe3ea",
   "stone_base": "#9fa8b4",
   "stone_shadow": "#6b7380",
