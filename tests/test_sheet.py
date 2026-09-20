@@ -12,6 +12,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
+from PIL import Image
+
 import sheet  # noqa: E402
 
 from gridfile import GridError, load_palette  # noqa: E402
@@ -90,3 +92,32 @@ class ComposeTest(unittest.TestCase):
         self.assertEqual(
             sheet.columns_per_state(rows), {"idle": 2, "walk": 4, "attack": 3}
         )
+
+
+class MeasureTest(unittest.TestCase):
+    def setUp(self):
+        self.palette = load_palette()
+
+    def test_a_single_pixel_reports_its_row_and_column(self):
+        image = sheet.load_frame(FIXTURES / "sheet_dot.txt", self.palette)
+        self.assertEqual(sheet.measure(image), (2, 1.0))
+
+    def test_a_full_block_reports_the_bottom_row_and_the_middle(self):
+        image = sheet.load_frame(FIXTURES / "sheet_block.txt", self.palette)
+        self.assertEqual(sheet.measure(image), (3, 1.5))
+
+    def test_an_empty_frame_reports_nothing(self):
+        self.assertEqual(sheet.measure(Image.new("RGBA", (4, 4))), (None, None))
+
+
+class PreviewTest(unittest.TestCase):
+    def setUp(self):
+        self.palette = load_palette()
+
+    def test_the_preview_is_scaled_and_opaque(self):
+        rows = [["sheet_block"] + [None] * 3] + [[None] * 4 for _ in range(11)]
+        canvas = sheet.compose_sheet(rows, sheet.load_frames(rows, self.palette, FIXTURES))
+        out = sheet.preview(canvas, frame=4, scale=4)
+        self.assertEqual(out.size, (canvas.width * 4, canvas.height * 4))
+        # 背景を敷くので、透明だった領域も不透明になる
+        self.assertEqual(out.getpixel((out.width - 2, out.height - 2))[3], 255)

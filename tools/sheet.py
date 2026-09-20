@@ -111,6 +111,67 @@ def columns_per_state(rows: list[list[str | None]]) -> dict[str, int]:
     return counts
 
 
+BACKDROP = (48, 48, 64, 255)
+BORDER = (255, 255, 255, 60)
+FOOT_LINE = (255, 90, 90, 150)
+CENTER_LINE = (90, 170, 255, 110)
+
+
+def measure(image: Image.Image) -> tuple[int | None, float | None]:
+    """The lowest opaque row and the horizontal midpoint of the opaque pixels."""
+    box = image.getchannel("A").getbbox()
+    if box is None:
+        return None, None
+    left, _, right, bottom = box
+    return bottom - 1, (left + right - 1) / 2
+
+
+def preview(canvas: Image.Image, frame: int, scale: int = 4) -> Image.Image:
+    """The sheet on a flat backdrop with cell borders, the foot line and the
+    centre line drawn over it.
+
+    The defect this is for is a frame whose feet or centre sit a pixel off its
+    neighbours', which makes the animation jitter. Looking at one enlarged frame
+    cannot show it - the same way one tile cannot show a seam.
+    """
+    base = Image.new("RGBA", canvas.size, BACKDROP)
+    base.alpha_composite(canvas)
+    out = base.resize((canvas.width * scale, canvas.height * scale), Image.NEAREST)
+
+    overlay = Image.new("RGBA", out.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    for x in range(0, canvas.width + 1, frame):
+        draw.line([(x * scale, 0), (x * scale, out.height)], fill=BORDER)
+    for y in range(0, canvas.height + 1, frame):
+        draw.line([(0, y * scale), (out.width, y * scale)], fill=BORDER)
+    for top in range(0, canvas.height, frame):
+        y = (top + FOOT_Y) * scale
+        draw.line([(0, y), (out.width, y)], fill=FOOT_LINE)
+    for left in range(0, canvas.width, frame):
+        x = int((left + (frame - 1) / 2) * scale)
+        draw.line([(x, 0), (x, out.height)], fill=CENTER_LINE)
+    return Image.alpha_composite(out, overlay)
+
+
+def report(frames: dict[str, Image.Image], frame: int) -> None:
+    """Print where the feet and the centre actually are.
+
+    Advice only - this never changes the exit code. `attack` frames step
+    forward, so the feet are supposed to move there. Three earlier machine
+    checks in this repo were withdrawn or downgraded once they were measured
+    against every existing asset; see README.
+    """
+    expected_center = (frame - 1) / 2
+    print(f"     {'frame':<18}{'foot_y':>7}{'center_x':>10}   "
+          f"(expected foot_y={FOOT_Y}, center_x={expected_center})")
+    for name in sorted(frames):
+        foot, center = measure(frames[name])
+        flag = ""
+        if foot != FOOT_Y or center is None or abs(center - expected_center) > 1:
+            flag = "  <-- off"
+        print(f"     {name:<18}{str(foot):>7}{str(center):>10}{flag}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -144,6 +205,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"ok   {display(destination)}  {canvas.width}x{canvas.height}")
     for state, count in columns_per_state(rows).items():
         print(f"     {state:<7} {count} frame(s)")
+    frame = frame_size(frames)
+    if args.scale != 1:
+        large = args.outdir / f"{name}_preview.png"
+        preview(canvas, frame, args.scale).save(large)
+        print(f"ok   {display(large)}")
+    report(frames, frame)
     return 0
 
 
