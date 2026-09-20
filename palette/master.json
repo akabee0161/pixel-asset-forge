@@ -38,11 +38,24 @@
   "stone_shadow": "#6b7380",
   "stone_dark": "#424854",
 
+  "floor_hi": "#c2b49a",
+  "floor_base": "#94897a",
+  "floor_shadow": "#625a4e",
+  "floor_dark": "#413b34",
+
   "roof_hi": "#c85a4a",
   "roof_base": "#9c3a32",
   "roof_shadow": "#6b241f",
 
+  "carpet_hi": "#b8424e",
+  "carpet_base": "#8b2637",
+  "carpet_shadow": "#4e1220",
+
   "water_hi": "#8fd4ea",
   "water_base": "#3f93c8",
-  "water_shadow": "#2a6a9c"
+  "water_shadow": "#2a6a9c",
+
+  "flame_hi": "#ffe9a8",
+  "flame_base": "#f5a83c",
+  "flame_deep": "#cf5028"
 }
