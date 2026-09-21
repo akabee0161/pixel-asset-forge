@@ -1,0 +1,2 @@
+# from: left_atk_hit.txt
+# transform: mirror_x
