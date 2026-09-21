@@ -28,6 +28,11 @@
   3. `--layout` で組んだマップで**別の物に見えないか**（切り株が木箱、井戸が手提げ桶、
      道標が台に見えた。拡大画像1枚では、自分が何を描いたか知っているので気付けない）
   **目視の締めは必ず `--layout` のマップにすること。**
+- **`unit` 型も1枚の目視では終わらない。`tools/sheet.py` のプレビューと、ゲームで動かすこと。**
+  1. プレビューの**赤い足元ライン(y=30)**。コマ間で足元や中心が1pxずれるとアニメがガタつくが、
+     1コマの拡大画像では絶対に分からない
+  2. **ゲームに入れて動かす。** character-tactics は canvas を 0.796倍で描いた実績があり、
+     **1〜2pxの線は丸ごと消える**（振りかぶりの剣が消えた）。整数倍で表示される保証は無い
 - **完成したら `tools/contact_sheet.py` を更新する。** 型をまたいだ絵柄のズレはここで見つかる。
 
 ## コマンド
@@ -38,6 +43,7 @@
 .venv/bin/python tools/probe_colors.py a b    # 2色が区別できるか（描く前に使う）
 .venv/bin/python tools/render.py              # txt -> png（等倍と x8）
 .venv/bin/python tools/tilemap.py             # tile を 3x3 で並べる（継ぎ目の確認）
+.venv/bin/python tools/sheet.py sheets/roran.txt  # unit のシートとプレビューを出す
 .venv/bin/python tools/contact_sheet.py       # build/contact_sheet.png
 .venv/bin/python -m unittest discover -s tests  # tools/ を触ったとき
 ```
@@ -103,9 +109,12 @@
 
 `docs/HANDOFF.md` の「3. 未確定のこと」を参照。
 
-**確定済み:** 解像度は `face` = 32x32、`item` = 16x16、`tile` = 16x16。
+**確定済み:** 解像度は `face` = 32x32、`item` = 16x16、`tile` = 16x16、`unit` = 32x32。
 `tile` はシームレス（全周に輪郭を回さない）。
+`unit` は足元 y=30・左右中央・背丈24〜26px で、シート定義は `sheets/` に置く
+（`assets/` の下に置くと `validate.py` / `render.py` がグリッドとして読んで落ちる）。
 
 **未確定:** 目指す絵柄、アセットあたりの色数上限（`# max_colors:` は実装済みだが
-どのアセットでも未使用）、マスターパレットの具体的な色、`face` / `item` / `tile` 以外の
-型の一覧、未定義の型の解像度。必要になったら確認を取る。
+どのアセットでも未使用）、マスターパレットの具体的な色、
+`face` / `item` / `tile` / `unit` 以外の型の一覧、未定義の型の解像度、
+`unit` で許す最小の線幅。必要になったら確認を取る。
