@@ -4,8 +4,10 @@
 
 ## 原則
 
-- **グリッドが正、PNG は生成物。** `assets/**/*.txt` だけが編集対象。`build/` 以下の PNG は
-  いつ消してもよい。PNG を直接編集しない。
+- **グリッドが正、PNG は生成物。** アセットの絵を変えるときに編集するのは
+  `assets/**/*.txt` だけ。`build/` 以下の PNG はいつ消してもよく、PNG を直接編集しない。
+  **これは絵の入力をグリッドに一本化する規則であって、`tools/` `tests/` `sheets/` `docs/` の
+  変更を禁じるものではない**（`tools/` を触ったら下記の unittest を通すこと）。
 - **新規アセットを書く前に、必ず `types/<type>/SPEC.md` と `types/<type>/reference/` を読む。**
   絵柄は散文ではなく reference で揃える。
 - **目視の前に `tools/validate.py` を通す。** 行長・未定義文字・パレット外参照は

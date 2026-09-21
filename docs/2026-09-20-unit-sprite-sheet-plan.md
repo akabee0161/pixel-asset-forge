@@ -1,5 +1,11 @@
 # `unit` 型スプライトシート 実装計画
 
+作成: 2026-09-20。**このファイルは作成時点のログ**。運用の最新は `README.md` と `CLAUDE.md` を見ること。
+実行中に変わった判断は正典側に反映してあり、この計画書は遡って更新しない。
+**とくにシート定義の置き場所は、実行中に `sheets/<unit>.txt` へ変わった**
+（`assets/` 以下に置くと `validate.py` と `render.py` がグリッドとして読んで落ちるため）。
+経緯は README の「`unit` 型」節にある。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** ロラン1体ぶんの 128×384 スプライトシートを本リポジトリの資産から生成し、character-tactics の仮絵と差し替えて、この仕組みの限界を実測する。
@@ -695,7 +701,7 @@ class PreviewTest(unittest.TestCase):
 
     def test_the_preview_is_scaled_and_opaque(self):
         rows = [["sheet_block"] + [None] * 3] + [[None] * 4 for _ in range(11)]
-        canvas = sheet.compose_sheet(rows, self.palette, FIXTURES)
+        canvas = sheet.compose_sheet(rows, sheet.load_frames(rows, self.palette, FIXTURES))
         out = sheet.preview(canvas, frame=4, scale=4)
         self.assertEqual(out.size, (canvas.width * 4, canvas.height * 4))
         # 背景を敷くので、透明だった領域も不透明になる
