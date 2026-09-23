@@ -166,7 +166,7 @@ def report(frames: dict[str, Image.Image], frame: int) -> None:
     Advice only - this never changes the exit code. `attack` frames step
     forward, so the feet are supposed to move there. Three earlier machine
     checks in this repo were withdrawn or downgraded once they were measured
-    against every existing asset; see README.
+    against every existing asset; see docs/2026-09-23-findings.md.
     """
     expected_center = (frame - 1) / 2
     print(f"     {'frame':<18}{'foot_y':>7}{'center_x':>10}   "
