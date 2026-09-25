@@ -43,6 +43,7 @@
 | **`item` の `SPEC.md` と、`tile` / `item` の `reference/` が無い** | `tile` と `unit` の `SPEC.md` は 2026-09-23 に README から規約を移して作った。`item` は `types/item/` 自体が無い（1点しか無いので保留でよい）。`tile` は `reference/` が無く、当面 `layouts/` のマップをお手本にしている | 小 | GitHub #1 |
 | **`unit` の reference が本体のコピー** | `types/unit/reference/roran_{down,up,left}_base.txt` は `assets/unit/roran/*_base.txt` と行が完全に同じ。片方を直すともう片方とずれる。`contact_sheet.py` でも unit が28点（24＋4）と重複して並ぶ | 小 | 2026-09-23 |
 | **`seed/face32.py` が実行経路に無い** | リポジトリ化前の原型で、分解済み。git の履歴に残るので削除できる | 小 | 2026-09-23 |
+| **剣が `stone_*`、盾が `metal_*` で命名と見た目が合っていない** | ロランの剣の刃は `stone_hi` / `stone_base` で白銀に見え、盾は `metal_*` で金色に見える。素材の印象と命名が逆になっている。装備を `item` として切り出してパラメータ化する段階で、素材ごとの色の割り当てを決め直す必要がある。絵柄そのものは変えない方針なので、今は命名と割り当ての問題として残す | 中（`item` カタログの整備と同時） | 2026-09-25 |
 
 ## 絵
 
