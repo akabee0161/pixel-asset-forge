@@ -44,7 +44,7 @@ def checkerboard(size: tuple[int, int], square: int) -> Image.Image:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/ and references)")
+    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/, references and bases)")
     parser.add_argument("--scale", type=int, default=4, help="enlargement factor per tile (default: 4)")
     parser.add_argument("--columns", type=int, default=6, help="tiles per row (default: 6)")
     parser.add_argument("-o", "--output", type=Path, default=REPO_ROOT / "build" / "contact_sheet.png")

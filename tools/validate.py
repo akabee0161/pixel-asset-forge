@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Machine checks for grid files. Run this before looking at any PNG.
 
-    tools/validate.py                 # assets/ and every types/*/reference/
+    tools/validate.py                 # assets/, every types/*/reference/ and types/*/base/
     tools/validate.py assets/item     # a directory
     tools/validate.py assets/face/knight.txt
 
@@ -18,9 +18,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gridfile import REPO_ROOT, GridError, check, display, find_grids, load_palette, parse
 
 
-def default_targets() -> list[Path]:
-    targets = [REPO_ROOT / "assets"]
-    targets += sorted((REPO_ROOT / "types").glob("*/reference"))
+def default_targets(root: Path = REPO_ROOT) -> list[Path]:
+    targets = [root / "assets"]
+    targets += sorted((root / "types").glob("*/reference"))
+    targets += sorted((root / "types").glob("*/base"))
     return [t for t in targets if t.exists()]
 
 
@@ -44,7 +45,7 @@ def collect(targets: list[Path]) -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/ and references)")
+    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/, references and bases)")
     parser.add_argument("-q", "--quiet", action="store_true", help="only report failures")
     args = parser.parse_args(argv)
 

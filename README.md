@@ -109,7 +109,7 @@ ok   assets/item/chest.txt  16x16  8 colours
 - `# max_colors: N` を書いた場合、使用色数がそれ以下か
 
 **絵として正しいかは判定しない。** 目視の前に、数え間違いのような安い誤りを落とすための関門である。
-引数なしで実行すると `assets/` と `types/*/reference/` の全件を検査する。異常があれば終了コードが非ゼロになる。
+引数なしで実行すると `assets/` と `types/*/reference/` と `types/*/base/` の全件を検査する。異常があれば終了コードが非ゼロになる。
 
 ### 2.3 PNG にして見る
 
@@ -120,7 +120,7 @@ ok   assets/item/chest.txt  16x16  8 colours
 `build/item/chest.png`（等倍）と `build/item/chest_x8.png`（8倍）が出る。
 **見るのは `_x8.png` の方。** 等倍は小さすぎて目視できない。
 
-引数なしなら全アセットを描画する。`types/*/reference/` の PNG は git 管理下に置くため、
+引数なしなら全アセットを描画する。`types/` 以下（`reference/` と `base/`）の PNG は git 管理下に置くため、
 `build/` ではなくグリッドの隣に出る。
 
 ### 2.4 派生ファイル（反転・回転）

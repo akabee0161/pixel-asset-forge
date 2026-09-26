@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that colours which touch each other are actually tellable apart.
 
-    tools/check_colors.py                  # assets/ and every types/*/reference/
+    tools/check_colors.py                  # assets/, every types/*/reference/ and types/*/base/
     tools/check_colors.py assets/tile
 
 This is advisory, not a gate. `validate.py` decides whether a grid is well
@@ -136,7 +136,7 @@ def inspect(grid, palette: dict[str, tuple[int, int, int]]):
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/ and references)")
+    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/, references and bases)")
     parser.add_argument("-q", "--quiet", action="store_true", help="only report grids with something to say")
     args = parser.parse_args(argv)
 
