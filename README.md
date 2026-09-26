@@ -109,7 +109,7 @@ ok   assets/item/chest.txt  16x16  8 colours
 - `# max_colors: N` を書いた場合、使用色数がそれ以下か
 
 **絵として正しいかは判定しない。** 目視の前に、数え間違いのような安い誤りを落とすための関門である。
-引数なしで実行すると `assets/` と `types/*/reference/` の全件を検査する。異常があれば終了コードが非ゼロになる。
+引数なしで実行すると `assets/` と `types/*/reference/` と `types/*/base/` の全件を検査する。異常があれば終了コードが非ゼロになる。
 
 ### 2.3 PNG にして見る
 
@@ -120,7 +120,7 @@ ok   assets/item/chest.txt  16x16  8 colours
 `build/item/chest.png`（等倍）と `build/item/chest_x8.png`（8倍）が出る。
 **見るのは `_x8.png` の方。** 等倍は小さすぎて目視できない。
 
-引数なしなら全アセットを描画する。`types/*/reference/` の PNG は git 管理下に置くため、
+引数なしなら全アセットを描画する。`types/` 以下（`reference/` と `base/`）の PNG は git 管理下に置くため、
 `build/` ではなくグリッドの隣に出る。
 
 ### 2.4 派生ファイル（反転・回転）
@@ -141,7 +141,7 @@ cat assets/tile/river_nw.txt
 - 書かなかったヘッダは元のファイルから引き継ぐ。回転なら `size` の幅と高さは自動で入れ替わる
 
 **変形すると光の向きも一緒に動く。** 左上から光が当たった絵を左右反転すると、光は右上からになる。
-だから川や道のような平らなものには使えるが、陰影のある顔や城の角には使えない。
+だから川や道のような平らなものには使えるが、陰影のある顔や城の角には使えない。キャラ（`unit`）にも使わない。左右で装備の手前と奥が入れ替わるため。
 この判断は機械では検査していない。
 
 ### 2.5 タイルを並べる
@@ -258,7 +258,8 @@ CLAUDE.md                  Claude が守る作業規約（AI 向け）
 ISSUES.md                  見つかっていて直していない課題
 palette/master.json        色名 -> RGB。色は必ずここ経由で参照する
 types/<type>/SPEC.md       型ごとの機械的な規約（寸法・構成・並び方）
-types/<type>/reference/    合格済みのお手本。絵柄はここで揃える
+types/<type>/reference/    合格済みのお手本。絵柄はここで揃える（`unit` は `assets/unit/roran/` が手本）
+types/unit/base/           unit の素体（4方向）。新しい unit を複製して作る土台
 assets/<type>/<name>.txt   アセットの元テキスト（これが正）
 sheets/<unit>.txt          unit のシート定義
 layouts/<map>.txt          tilemap.py --layout に渡すマップ
@@ -276,7 +277,7 @@ seed/face32.py             リポジトリ化前の原型。もう使ってい�
 | `face`（顔グラ） | reference 1点（`knight`） | 32x32 | [`types/face/SPEC.md`](types/face/SPEC.md) |
 | `item`（小物） | 1点（`chest`） | 16x16 | まだ無い |
 | `tile`（マップ） | 65点（草原45・城内20） | 16x16 | [`types/tile/SPEC.md`](types/tile/SPEC.md) |
-| `unit`（マップ上のキャラ） | 1体24コマ（ロラン） | 32x32 | [`types/unit/SPEC.md`](types/unit/SPEC.md) |
+| `unit`（マップ上のキャラ） | 1体24コマ（ロラン）＋素体4方向 | 32x32 | [`types/unit/SPEC.md`](types/unit/SPEC.md) |
 
 **「正」はテキストで、PNG は生成物。** 絵を変えるときに編集するのは `assets/**/*.txt` だけで、
 PNG を直接編集しない。
@@ -319,7 +320,7 @@ unit 型で、敵の兵士を1体。ロランと同じ規約・同じシート�
 
 依頼すると、Claude はおおむね次の順で進める（`CLAUDE.md` に書いてある手順）。
 
-1. `types/<type>/SPEC.md` と `reference/` を読む
+1. `types/<type>/SPEC.md` と `reference/` を読む（`unit` は `assets/unit/roran/` と `types/unit/base/`）
 2. 新しい色が要るなら、`probe_colors.py` で隣り合う色と測ってから `master.json` に足す
 3. `assets/<type>/<name>.txt` を書く
 4. `validate.py` → `render.py` → `_x8.png` を自分で目視して直す
@@ -339,7 +340,7 @@ Claude は自分が何を描いたか知っているので、そう見えてし�
 | 全部 | `build/<type>/<name>_x8.png` | 何に見えるか。光が左上から当たっているか |
 | `tile` | `build/tilemap/<map>_tiled.png`（`--layout`） | **マップの中で**別の物に見えないか。継ぎ目・格子が見えないか |
 | `unit` | `build/sheets/<unit>_preview.png` | 足元が赤線に揃っているか。コマ間で体がずれないか |
-| `unit` | ゲーム内（character-tactics） | 縮小表示で細部が消えないか（1〜2px の剣が消えた実績あり） |
+| `unit` | ゲーム内（character-tactics） | 縮小表示で細部が消えないか（1〜2px の剣が消えた実績あり。ただし 0.796倍の縮小はゲーム側で修正予定の経過的な課題で、いずれ縮小されなくなる） |
 | 全部 | `build/contact_sheet.png` | 既存のアセットと並べて浮いていないか |
 
 **差し戻すときは、部位と症状を具体的に言う。** 行と文字で直せる粒度になる。
@@ -395,7 +396,7 @@ Claude は自分が何を描いたか知っているので、そう見えてし�
 | **未確定** | アセットあたりの色数上限。`# max_colors:` は実装済みだがどのアセットでも未使用 |
 | **未確定** | マスターパレットの具体的な色 |
 | **未確定** | `face` / `item` / `tile` / `unit` 以外の型と、その解像度 |
-| **未確定** | `unit` で許す最小の線幅（0.796倍表示で1pxの刃が消えた。[実測](docs/2026-09-23-findings.md#ゲームに入れて分かったこと)） |
+| **未確定** | `unit` で許す最小の線幅（0.796倍表示で1pxの刃が消えた。[実測](docs/2026-09-23-findings.md#ゲームに入れて分かったこと)。0.796倍はゲーム側で修正予定の経過的な課題で、いずれ縮小されなくなる） |
 | **未確定** | `tile` をゲームへどう渡すか（1枚ずつの PNG / タイルセット / マップの完成品）。`tilemap.py` は検証用 |
 
 未確定の項目は、Claude も勝手に決めない。決めたら依頼時に伝え、この表を更新する。

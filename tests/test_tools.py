@@ -15,7 +15,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 from gridfile import TRANSFORMS, GridError, check, load_palette, parse, parse_background  # noqa: E402
 from render import output_dir, to_image  # noqa: E402
-from validate import collect  # noqa: E402
+from validate import collect, default_targets  # noqa: E402
 
 PALETTE = {"outline": (10, 20, 30), "skin_base": (200, 150, 100)}
 
@@ -188,6 +188,38 @@ class TargetPathTest(unittest.TestCase):
     def test_relative_override_is_resolved(self):
         with contextlib.chdir(REPO_ROOT / "tools"):
             self.assertEqual(output_dir(REPO_ROOT / "assets" / "a.txt", Path("out")), REPO_ROOT / "tools" / "out")
+
+
+class DefaultTargetsTest(unittest.TestCase):
+    """Unit bodies live in types/unit/base; every tool used to skip them."""
+
+    def make_tree(self, *dirs: str) -> Path:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        for d in dirs:
+            (root / d).mkdir(parents=True)
+        return root
+
+    def test_bases_follow_references(self):
+        root = self.make_tree("assets", "types/face/reference", "types/unit/reference", "types/unit/base")
+        self.assertEqual(
+            default_targets(root),
+            [
+                root / "assets",
+                root / "types/face/reference",
+                root / "types/unit/reference",
+                root / "types/unit/base",
+            ],
+        )
+
+    def test_a_type_with_only_a_base_is_included(self):
+        root = self.make_tree("assets", "types/unit/base")
+        self.assertEqual(default_targets(root), [root / "assets", root / "types/unit/base"])
+
+    def test_missing_directories_are_left_out(self):
+        root = self.make_tree("types/tile")
+        self.assertEqual(default_targets(root), [])
 
 
 class TransformTest(unittest.TestCase):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render grid files to PNG.
 
-    tools/render.py                   # assets/ and every types/*/reference/
+    tools/render.py                   # assets/, every types/*/reference/ and types/*/base/
     tools/render.py assets/item       # a directory
     tools/render.py assets/face/knight.txt
 
@@ -9,7 +9,7 @@ Each grid produces a 1x PNG and an enlarged nearest-neighbour copy
 (``<name>_x8.png``); the enlarged one is what you actually look at, because a
 32x32 PNG is too small to review. Grids under ``assets/`` render into
 ``build/`` (git-ignored); grids under ``types/`` render beside the grid,
-because reference PNGs are committed.
+because reference and base PNGs are committed.
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def output_dir(path: Path, override: Path | None) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/ and references)")
+    parser.add_argument("targets", nargs="*", type=Path, help="grid files or directories (default: assets/, references and bases)")
     parser.add_argument("--scale", type=int, default=8, help="enlargement factor for the review copy (default: 8)")
     parser.add_argument("-o", "--outdir", type=Path, default=None, help="write every PNG here instead of the default location")
     args = parser.parse_args(argv)
