@@ -221,7 +221,22 @@ cat sheets/roran.txt
 最後に出る表は足元と中心の実測である。`atk_hit` と横向きの `atk_wind` の `off` は、剣が体の外に出て
 外接矩形が広がるので中心がずれる、という仕様どおりの逸脱で、問題ではない。
 
-### 2.8 全アセットの一覧
+### 2.8 物のセット（16px の部品を組む）
+
+```sh
+cat sets/village.txt
+.venv/bin/python tools/sets.py
+```
+
+村・岩・木のように1マス（32px）を占める物は、16px の部品4枚（`assets/tile/<物>_{nw,ne,sw,se}.txt`）で持ち、
+組み方を `sets/<物>.txt` に書く（形式は `layouts/` と同じ。`.` は置けない）。
+
+- `build/sets/<物>.png`（32×32）：**ゲームに渡す成果物**
+- `build/sets/<物>_x8.png`：目視用
+
+部品は普通のタイルなので、`tilemap.py --layout` で周りのタイルと並べて確かめられる（`layouts/objects.txt`）。
+
+### 2.9 全アセットの一覧
 
 ```sh
 .venv/bin/python tools/contact_sheet.py
@@ -243,6 +258,7 @@ check_colors.py ─── 隣り合う色が見分けられるか（助言）
 render.py ────────── 1枚ずつ PNG（等倍 + x8）      目視の基本
 tilemap.py ───────── タイルを並べる                 検証用
 sheet.py ──────────── unit をシートに組む           ゲームに渡す成果物
+sets.py ───────────── 部品を組んで物にする         ゲームに渡す成果物
 contact_sheet.py ─── 全点の一覧                     型をまたいだ比較
 
 probe_colors.py ──── 描く前に色の候補を測る
@@ -262,6 +278,7 @@ types/<type>/reference/    合格済みのお手本。絵柄はここで揃え�
 types/unit/base/           unit の素体（4方向）。新しい unit を複製して作る土台
 assets/<type>/<name>.txt   アセットの元テキスト（これが正）
 sheets/<unit>.txt          unit のシート定義
+sets/<物>.txt              物のセットの定義（16px の部品をどう組むか）
 layouts/<map>.txt          tilemap.py --layout に渡すマップ
 tools/                     ツール一式（2章）
 tests/                     tools/ のテストとフィクスチャ

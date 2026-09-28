@@ -49,6 +49,7 @@
 .venv/bin/python tools/render.py              # txt -> png（等倍と x8）
 .venv/bin/python tools/tilemap.py             # tile を 3x3 で並べる（継ぎ目の確認）
 .venv/bin/python tools/sheet.py sheets/roran.txt  # unit のシートとプレビューを出す
+.venv/bin/python tools/sets.py                # 16px の部品を組んで物を出す（build/sets/）
 .venv/bin/python tools/contact_sheet.py       # build/contact_sheet.png
 .venv/bin/python -m unittest discover -s tests  # tools/ を触ったとき
 ```
