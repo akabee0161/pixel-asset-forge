@@ -54,7 +54,7 @@
 .venv/bin/python -m unittest discover -s tests  # tools/ を触ったとき
 ```
 
-`tilemap.py --layout layouts/{example,field,castle_interior}.txt` でマップを組む。
+`tilemap.py --layout layouts/{example,field,castle_interior,objects}.txt` でマップを組む。
 新しいセットを作ったら、その全点を置いたレイアウトを `layouts/` に足すこと。
 
 初回のみ: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`

@@ -293,7 +293,7 @@ seed/face32.py             リポジトリ化前の原型。もう使ってい�
 |---|---|---|---|
 | `face`（顔グラ） | reference 1点（`knight`） | 32x32 | [`types/face/SPEC.md`](types/face/SPEC.md) |
 | `item`（小物） | 1点（`chest`） | 16x16 | まだ無い |
-| `tile`（マップ） | 65点（草原45・城内20） | 16x16 | [`types/tile/SPEC.md`](types/tile/SPEC.md) |
+| `tile`（マップ） | 77点（草原57・城内20）。うち12点は物のセット3つ（村・岩・木）の部品 | 16x16（セットは 32x32） | [`types/tile/SPEC.md`](types/tile/SPEC.md) |
 | `unit`（マップ上のキャラ） | 1体24コマ（ロラン）＋素体4方向 | 32x32 | [`types/unit/SPEC.md`](types/unit/SPEC.md) |
 
 **「正」はテキストで、PNG は生成物。** 絵を変えるときに編集するのは `assets/**/*.txt` だけで、
@@ -342,7 +342,7 @@ unit 型で、敵の兵士を1体。ロランと同じ規約・同じシート�
 3. `assets/<type>/<name>.txt` を書く
 4. `validate.py` → `render.py` → `_x8.png` を自分で目視して直す
 5. 型ごとの追加確認
-   - `tile`：`tilemap.py` の `--repeat` と `--layout` で並べて見る
+   - `tile`：`tilemap.py` の `--repeat` と `--layout` で並べて見る。物のセットなら `sets.py` で組み、`layouts/objects.txt` で見る
    - `unit`：`sheet.py` のプレビューで足元と中心を見る
 6. `check_colors.py` と `contact_sheet.py` を通す
 7. 画像を示して提出する
