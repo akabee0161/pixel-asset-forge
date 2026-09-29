@@ -40,8 +40,8 @@ TILE_DIR = REPO_ROOT / "assets" / "tile"
 OUTPUT_DIR = REPO_ROOT / "build" / "tilemap"
 
 
-def load_tile(name: str, palette) -> Image.Image:
-    path = name if isinstance(name, Path) else TILE_DIR / f"{name}.txt"
+def load_tile(name: str | Path, palette, tile_dir: Path = TILE_DIR) -> Image.Image:
+    path = name if isinstance(name, Path) else tile_dir / f"{name}.txt"
     grid = parse(path)
     errors = check(grid, palette)
     if errors:
@@ -49,8 +49,10 @@ def load_tile(name: str, palette) -> Image.Image:
     return to_image(grid, palette)
 
 
-def compose(layout: list[list[str | None]], palette, scale: int) -> Image.Image:
-    images = {name: load_tile(name, palette) for row in layout for name in row if name}
+def compose(
+    layout: list[list[str | None]], palette, scale: int, tile_dir: Path = TILE_DIR
+) -> Image.Image:
+    images = {name: load_tile(name, palette, tile_dir) for row in layout for name in row if name}
     if not images:
         raise GridError("layout has no tiles in it")
     cell_w = max(image.width for image in images.values())
