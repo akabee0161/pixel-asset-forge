@@ -26,8 +26,6 @@
 |---|---|---|---|
 | **Python 3.10 でテストが3件落ちる** | `tests/test_tools.py` の `TargetPathTest` が 3.11 以降にしかない `contextlib.chdir` を使っている。対応する Python のバージョンもどこにも書かれていない。`os.chdir` を try/finally で戻す小さなヘルパーに置き換えるか、3.11 以上を README に明記する | 小 | 2026-09-23 |
 | **`check_colors.py` が既定の実行で毎回失敗する** | 原因は上の `knight` 1件だけだが、そのせいで新しい hard failure が出ても終了コードで区別できない。`knight` の色が決まれば解消する | 小（色の決定待ち） | 2026-09-23 |
-| **`sets.py` に無いファイルを渡すとトレースバックで止まる** | `tools/sets.py sets/vilage.txt` のように定義のパスを打ち間違えると、`read_layout` の `read_text` が `FileNotFoundError` を投げ、どの定義がなぜだめかの形で出ない。`main` のループで `path.is_file()` を見て `FAIL` を出し、残りの定義を続ける | 小 | 2026-09-29 最終レビュー |
-| **部品の中の `.`（透明）を検査していない** | `tile` の部品は `# bg` を書かないと透明が既定になるので、グリッドに `.` を1つ打ち間違えても `validate.py` も `sets.py` も通り、ゲームに渡す32pxの PNG に穴が空く。`sets.py` の `check_parts` で部品の `.` を部品名と座標つきで落とすか、組んだ画像のアルファの最小が255か確かめる | 小 | 2026-09-29 最終レビュー |
 | **`sheet.py` が列数を検査しない** | 12行は強制するが列数は見ていない。3列の定義を書くと 96×384 が黙って出て、気付くのは character-tactics の `sheet-size.test.ts` まで遅れる。ただし列数はユニットごとに変わりうる（`garum` は `frame=48`）ので、4列固定の検査は誤り | 小 | README（旧） |
 
 ## ツールの改善（挙動は変えない）
@@ -36,7 +34,7 @@
 |---|---|---|---|
 | **同じ処理が4本のツールに重複** | 「パレット読み込み → 対象収集 → 読み込み → 検査 → FAIL 表示」が `validate` / `render` / `check_colors` / `contact_sheet` にある。「読み込み＋検査＋画像化」も `tilemap.load_tile` と `sheet.load_frame` に重複 | 中 | 2026-09-23 |
 | **ツール同士が互いの本体から関数を借りている** | `render` / `check_colors` / `contact_sheet` が `collect` / `default_targets` を `validate.py` から、`sheet.py` が `read_layout` を `tilemap.py` から import している。共通部分は `gridfile.py` に置くのが自然 | 小 | 2026-09-23 |
-| **共有関数が `SystemExit` を投げる** | `tilemap.read_layout` は `sheet.py` と `sets.py` からも呼ばれるのに、エラー時に `SystemExit` で終了する。`sets.py` は定義を1つずつ組んで失敗を数えるが、行の長さが揃わない定義があると、そこで残りの定義を組まずに止まる。`load_tile` は型注釈が `str` なのに `Path` も受け付けている | 小 | 2026-09-23 |
+| **共有関数が `SystemExit` を投げる** | `tilemap.read_layout` は `sheet.py` と `sets.py` からも呼ばれるのに、エラー時に `SystemExit` で終了する。`sets.py` は `SystemExit` を定義ごとに受け止めて失敗として数えている（2026-09-29、PR #7 の CodeRabbit の指摘）。`load_tile` は型注釈が `str` なのに `Path` も受け付けている | 小 | 2026-09-23 |
 | **パレットを差し替えられない** | `palette/master.json` のパスが `tools/gridfile.py` で固定で、別のパレットを渡すオプションがどのツールにも無い。2Pカラーのような色違いを作るなら `--palette` が要る。必要になるまで作らない | 小 | 2026-09-23 |
 
 ## アセット・構成

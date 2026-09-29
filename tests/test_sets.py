@@ -62,6 +62,11 @@ class AssembleTest(unittest.TestCase):
         with self.assertRaisesRegex(GridError, "set_part_broken"):
             sets.assemble([[A, "set_part_broken"]], self.palette, FIXTURES)
 
+    def test_a_background_cell_in_a_part_is_rejected(self):
+        # validate.py accepts '.', but in a set it would be a transparent hole in the ground
+        with self.assertRaisesRegex(GridError, r"set_part_hole.*row 3 column 5 is '\.'"):
+            sets.assemble([[A, "set_part_hole"]], self.palette, FIXTURES)
+
 
 class MainTest(unittest.TestCase):
     def setUp(self):
@@ -91,6 +96,17 @@ class MainTest(unittest.TestCase):
         good = self.definition("good", f"{A} {A}\n{A} {A}\n")
         self.assertEqual(self.run_main(bad, good), 1)
         self.assertFalse((self.dir / "out" / "bad.png").exists())
+        self.assertTrue((self.dir / "out" / "good.png").exists())
+
+    def test_a_definition_with_uneven_rows_does_not_stop_the_others(self):
+        uneven = self.definition("uneven", f"{A}\n{A} {A}\n")
+        good = self.definition("good", f"{A} {A}\n{A} {A}\n")
+        self.assertEqual(self.run_main(uneven, good), 1)
+        self.assertTrue((self.dir / "out" / "good.png").exists())
+
+    def test_a_missing_definition_does_not_stop_the_others(self):
+        good = self.definition("good", f"{A} {A}\n{A} {A}\n")
+        self.assertEqual(self.run_main(self.dir / "nope.txt", good), 1)
         self.assertTrue((self.dir / "out" / "good.png").exists())
 
 

@@ -30,7 +30,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from gridfile import REPO_ROOT, GridError, check, display, load_palette, parse
+from gridfile import BACKGROUND, REPO_ROOT, GridError, check, display, load_palette, parse
 
 from tilemap import TILE_DIR, compose, read_layout
 
@@ -56,6 +56,12 @@ def check_parts(layout: list[list[str | None]], palette, tile_dir: Path) -> None
         errors = check(grid, palette)
         if errors:
             raise GridError(f"{display(path)}: {errors[0]}")
+        # check() accepts '.', but a tile without '# bg' draws it transparent: a hole in the ground
+        for y, row in enumerate(grid.rows):
+            if BACKGROUND in row:
+                raise GridError(
+                    f"{display(path)}: row {y} column {row.index(BACKGROUND)} is '.', but a part must fill every cell"
+                )
         if (grid.width, grid.height) != (PART, PART):
             raise GridError(f"{display(path)}: {grid.width}x{grid.height}, a part must be {PART}x{PART}")
 
@@ -92,7 +98,9 @@ def main(argv: list[str] | None = None) -> int:
     for path in definitions:
         try:
             image = assemble(read_layout(path), palette, args.tiledir)
-        except GridError as exc:
+        # read_layout raises SystemExit on a malformed definition and OSError on a missing one.
+        # Count either as this definition's failure so the others are still written
+        except (GridError, OSError, SystemExit) as exc:
             print(f"FAIL {display(path)}\n       {exc}", file=sys.stderr)
             failed += 1
             continue
